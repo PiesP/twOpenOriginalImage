@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X.com 이미지 원본 뷰어
 // @namespace    https://github.com/PiesP/twOpenOriginalImage
-// @version      1.0.1
+// @version      1.0.2
 // @description  X.com에서 이미지를 클릭하면 원본 크기로 로드하여 세로 배열 및 슬라이드쇼 모드, 메뉴바/썸네일 내비게이션 등 다양한 기능을 제공하는 스크립트
 // @match        https://x.com/*
 // @match        https://twitter.com/*
@@ -626,14 +626,16 @@
     
         // mousemove 이벤트: 상단 옵션바와 하단 썸네일바의 자동 숨김/표시 처리
         viewer.addEventListener('mousemove', function(e) {
-            if (e.clientY < 50 && optionsBar) {
+            // 상단 옵션바 자동 숨김/표시 처리
+            if (e.clientY < 50 && optionsBar && !optionsBar.contains(e.target)) {
                 clearTimeout(hideOptionsBarTimer);
                 optionsBar.style.transform = 'translateY(0)';
                 hideOptionsBarTimer = setTimeout(() => {
                     optionsBar.style.transform = 'translateY(-100%)';
                 }, 1000);
             }
-            if (e.clientY > window.innerHeight - 50 && thumbnailBar) {
+            // 하단 썸네일바 자동 숨김/표시 처리
+            if (e.clientY > window.innerHeight - 50 && thumbnailBar && !thumbnailBar.contains(e.target)) {
                 clearTimeout(thumbnailBar.hideTimer);
                 thumbnailBar.style.transform = 'translateY(0)';
                 thumbnailBar.hideTimer = setTimeout(() => {
