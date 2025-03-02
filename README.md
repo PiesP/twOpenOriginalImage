@@ -1,6 +1,6 @@
 # X.com 이미지 원본 뷰어 (포크 및 수정 버전)
 
-이 프로젝트는 원본 [twOpenOriginalImage](https://github.com/Coxxs/twOpenOriginalImage)를 포크하여 수정한 버전입니다. 본 저장소에서는 사용자 인터페이스 개선, 코드 정리 및 버전 관리를 목적으로 수정되었으며, 현재 릴리스 버전은 **1.0.0**입니다.
+이 프로젝트는 원본 [twOpenOriginalImage](https://github.com/Coxxs/twOpenOriginalImage)를 포크하여 수정한 버전입니다. 본 저장소에서는 사용자 인터페이스 개선, 코드 정리 및 버전 관리를 목적으로 수정되었으며, 현재 릴리스 버전은 **1.0.2**입니다.
 
 ## 설치 방법
 
