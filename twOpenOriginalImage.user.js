@@ -351,26 +351,35 @@
         const images = container.querySelectorAll('img');
         const winWidth = window.innerWidth;
         const winHeight = window.innerHeight;
+        
         images.forEach(img => {
-            img.style.maxWidth = 'none';
-            img.style.maxHeight = 'none';
-            const { naturalWidth: imgWidth, naturalHeight: imgHeight } = img;
-            if (mode === 'width') {
-                const newWidth = Math.min(winWidth, imgWidth);
-                img.style.width = `${newWidth}px`;
-                img.style.height = 'auto';
-            } else if (mode === 'height') {
-                const newHeight = Math.min(winHeight, imgHeight);
-                img.style.height = `${newHeight}px`;
-                img.style.width = 'auto';
-            } else if (mode === 'window') {
-                const scale = Math.min(1, Math.min(winWidth / imgWidth, winHeight / imgHeight));
-                img.style.width = `${imgWidth * scale}px`;
-                img.style.height = `${imgHeight * scale}px`;
+            const recalc = () => {
+                img.style.maxWidth = 'none';
+                img.style.maxHeight = 'none';
+                const imgWidth = img.naturalWidth;
+                const imgHeight = img.naturalHeight;
+                if (mode === 'width') {
+                    const newWidth = Math.min(winWidth, imgWidth);
+                    img.style.width = `${newWidth}px`;
+                    img.style.height = 'auto';
+                } else if (mode === 'height') {
+                    const newHeight = Math.min(winHeight, imgHeight);
+                    img.style.height = `${newHeight}px`;
+                    img.style.width = 'auto';
+                } else if (mode === 'window') {
+                    const scale = Math.min(1, Math.min(winWidth / imgWidth, winHeight / imgHeight));
+                    img.style.width = `${imgWidth * scale}px`;
+                    img.style.height = `${imgHeight * scale}px`;
+                }
+            };
+    
+            if (!img.complete) {
+                img.addEventListener('load', recalc);
+            } else {
+                recalc();
             }
         });
     }
-    
 
     function navigateImage(direction) {
         const newIndex = currentIndex + direction;
