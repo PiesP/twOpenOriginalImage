@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X.com 이미지 원본 뷰어
 // @namespace    https://github.com/PiesP/twOpenOriginalImage
-// @version      1.0.2
+// @version      1.0.3
 // @description  X.com에서 이미지를 클릭하면 원본 크기로 로드하여 세로 배열 및 슬라이드쇼 모드, 메뉴바/썸네일 내비게이션 등 다양한 기능을 제공하는 스크립트
 // @match        https://x.com/*
 // @match        https://twitter.com/*
