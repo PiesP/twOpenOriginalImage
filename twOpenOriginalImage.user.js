@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X.com 이미지 원본 뷰어
 // @namespace    https://github.com/PiesP/twOpenOriginalImage
-// @version      1.0.0
+// @version      1.0.1
 // @description  X.com에서 이미지를 클릭하면 원본 크기로 로드하여 세로 배열 및 슬라이드쇼 모드, 메뉴바/썸네일 내비게이션 등 다양한 기능을 제공하는 스크립트
 // @match        https://x.com/*
 // @match        https://twitter.com/*
@@ -169,6 +169,8 @@
     // 이벤트 핸들러 관련 함수
     // -------------------------------
     function preventXViewer(event) {
+        // 왼쪽 버튼이 아니면 무시 (오른쪽 버튼 등)
+        if (event.button !== 0) return;
         const viewer = document.getElementById('xcom-image-viewer');
         if (viewer && viewer.contains(event.target)) return;
         if (event.target.closest('img[src*="pbs.twimg.com/media/"]')) {
@@ -178,6 +180,8 @@
     }
 
     function onImageClick(event) {
+        // 왼쪽 버튼이 아니면 무시 (오른쪽 버튼 등)
+        if (event.button !== 0) return;
         const imgElement = event.target.closest('img[src*="pbs.twimg.com/media/"]');
         if (!imgElement) return;
         event.preventDefault();
