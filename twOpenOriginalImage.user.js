@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X.com 이미지 원본 뷰어
 // @namespace    https://github.com/PiesP/twOpenOriginalImage
-// @version      1.0.3
+// @version      1.0.4
 // @description  X.com에서 이미지를 클릭하면 원본 크기로 로드하여 세로 배열 및 슬라이드쇼 모드, 메뉴바/썸네일 내비게이션 등 다양한 기능을 제공하는 스크립트
 // @match        https://x.com/*
 // @match        https://twitter.com/*
@@ -14,21 +14,14 @@
 (function () {
     'use strict';
 
-    // -------------------------------
-    // 전역 상태 및 기본 설정
-    // -------------------------------
     let currentIndex = 0;
     let imageUrls = [];
     let tweetUser = '';
     let tweetId = '';
     let hideOptionsBarTimer;
-
     let displayMode = localStorage.getItem('displayMode') || "vertical";
     let currentAdjustMode = localStorage.getItem('adjustMode') || "window";
 
-    // -------------------------------
-    // 스타일 상수 정의
-    // -------------------------------
     const STYLE = {
         viewer: `
             position: fixed;
@@ -115,9 +108,6 @@
         `
     };
 
-    // -------------------------------
-    // 유틸리티 함수
-    // -------------------------------
     function getUserUIColor() {
         const computedStyle = getComputedStyle(document.body);
         const bgColor = computedStyle.backgroundColor || 'black';
@@ -150,14 +140,11 @@
         return format ? format : 'jpg';
     }
 
-    // -------------------------------
-    // 트윗 관련 함수
-    // -------------------------------
+    // 1.0.5: 트윗 요소 선택자를 다시 article로 복원
     function getTweetInfo(tweetElement) {
         const userMatch = tweetElement.querySelector('a[href^="/"]');
-        const tweetMatch = window.location.href.match(/status\/(\d+)/);
         tweetUser = userMatch ? userMatch.getAttribute('href').split('/')[1] : 'UnknownUser';
-        tweetId = tweetMatch ? tweetMatch[1] : 'UnknownID';
+        tweetId = (window.location.href.match(/status\/(\d+)/) || [])[1] || 'UnknownID';
     }
 
     function getAllImagesFromTweet(tweetElement) {
@@ -165,11 +152,7 @@
             .map(img => img.src.replace(/&name=\w+/, '&name=orig'));
     }
 
-    // -------------------------------
-    // 이벤트 핸들러 관련 함수
-    // -------------------------------
     function preventXViewer(event) {
-        // 왼쪽 버튼이 아니면 무시 (오른쪽 버튼 등)
         if (event.button !== 0) return;
         const viewer = document.getElementById('xcom-image-viewer');
         if (viewer && viewer.contains(event.target)) return;
@@ -179,13 +162,14 @@
         }
     }
 
+    // 1.0.5: 트윗 요소 선택자를 article로 복원하여 정상 동작하도록 함
     function onImageClick(event) {
-        // 왼쪽 버튼이 아니면 무시 (오른쪽 버튼 등)
         if (event.button !== 0) return;
         const imgElement = event.target.closest('img[src*="pbs.twimg.com/media/"]');
         if (!imgElement) return;
         event.preventDefault();
         event.stopPropagation();
+        event.stopImmediatePropagation();
         const tweet = imgElement.closest('article');
         if (!tweet) return;
         getTweetInfo(tweet);
@@ -195,15 +179,10 @@
         setTimeout(showImageViewer, 100);
     }
 
-    // -------------------------------
-    // DOM 생성 함수
-    // -------------------------------
     function createViewer() {
-        // 기존 뷰어 제거 및 스크롤 방지 처리
         const existingViewer = document.getElementById('xcom-image-viewer');
         if (existingViewer) existingViewer.remove();
         document.body.style.overflow = 'hidden';
-
         const viewer = document.createElement('div');
         viewer.id = 'xcom-image-viewer';
         viewer.style.cssText = STYLE.viewer;
@@ -215,7 +194,6 @@
         const optionsBar = document.createElement('div');
         optionsBar.id = 'optionsBar';
         optionsBar.style.cssText = STYLE.optionsBar(addAlpha(bgColor, 0.8), textColor);
-        // 옵션바 이벤트: 자동 숨김
         hideOptionsBarTimer = setTimeout(() => {
             optionsBar.style.transform = 'translateY(-100%)';
         }, 1000);
@@ -250,11 +228,9 @@
             transform: translateY(0);
             z-index: 10004;
         `;
-        // 자동 숨김: 1초 후 하단 메뉴바 숨기기 (translateY(100%))
         thumbnailBar.hideTimer = setTimeout(() => {
             thumbnailBar.style.transform = 'translateY(100%)';
         }, 1000);
-    
         thumbnailBar.addEventListener('mouseenter', () => {
             clearTimeout(thumbnailBar.hideTimer);
             thumbnailBar.style.transform = 'translateY(0)';
@@ -266,7 +242,7 @@
         });
         return thumbnailBar;
     }
-    
+
     function createImageContainer() {
         const container = document.createElement('div');
         container.style.cssText = `
@@ -282,7 +258,6 @@
             img.src = url;
             img.dataset.index = index;
             img.style.cssText = STYLE.image;
-            // 클릭 시 이미지 전환
             img.addEventListener('click', (event) => {
                 event.stopPropagation();
                 currentIndex = (index + 1) % imageUrls.length;
@@ -311,9 +286,6 @@
         return button;
     }
 
-    // -------------------------------
-    // 이미지 다운로드 기능
-    // -------------------------------
     function downloadCurrentImage() {
         if (!imageUrls.length) return;
         const url = imageUrls[currentIndex];
@@ -340,9 +312,6 @@
         });
     }
 
-    // -------------------------------
-    // 이미지 조정 및 내비게이션 기능
-    // -------------------------------
     function adjustImages(mode) {
         currentAdjustMode = mode;
         localStorage.setItem('adjustMode', mode);
@@ -418,13 +387,9 @@
         }
     }
 
-    // -------------------------------
-    // 모드 전환 및 UI 업데이트 기능
-    // -------------------------------
     function toggleDisplayMode() {
         displayMode = displayMode === "vertical" ? "slideshow" : "vertical";
         localStorage.setItem('displayMode', displayMode);
-        // 토글 버튼 업데이트
         const toggleBtn = document.querySelector('#optionsBar button[title^="모드 전환"]');
         if (toggleBtn) {
             if (displayMode === "vertical") {
@@ -480,9 +445,6 @@
         updateFocusedImageStyle();
     }
 
-    // -------------------------------
-    // 내비게이션 버튼 (오버레이) 관리
-    // -------------------------------
     function addOverlayNavButtons(viewer) {
         if (!viewer.querySelector("#overlay-nav-left")) {
             const leftBtn = document.createElement('button');
@@ -519,24 +481,15 @@
         if (rightBtn) rightBtn.remove();
     }
 
-    // -------------------------------
-    // 뷰어 생성 및 초기화
-    // -------------------------------
     function showImageViewer() {
-        // 저장된 설정 불러오기
-        displayMode = localStorage.getItem('displayMode') || displayMode;
-        currentAdjustMode = localStorage.getItem('adjustMode') || currentAdjustMode;
-    
-        // 기존 뷰어 제거 및 스크롤 방지
+        const savedScrollPos = window.pageYOffset || document.documentElement.scrollTop;
         const existingViewer = document.getElementById('xcom-image-viewer');
         if (existingViewer) existingViewer.remove();
         document.body.style.overflow = 'hidden';
     
-        // 뷰어 생성
         const viewer = createViewer();
         const { bgColor, textColor } = getUserUIColor();
     
-        // 옵션바 생성 및 버튼 추가
         const optionsBar = createOptionsBar();
         const prevBtn = createIconButton('fa-solid fa-arrow-left', () => navigateImage(-1), '이전 이미지');
         const nextBtn = createIconButton('fa-solid fa-arrow-right', () => navigateImage(1), '다음 이미지');
@@ -574,16 +527,14 @@
             viewer.remove();
             document.body.style.overflow = '';
             removeOverlayNavButtons();
+            window.scrollTo(0, savedScrollPos);
         }, '닫기 (Esc키로도 닫힘)');
         closeBtn.style.marginLeft = 'auto';
         closeBtn.style.marginRight = '30px';
     
         optionsBar.append(prevBtn, imageSelect, nextBtn, fitWidthBtn, fitHeightBtn, fitWindowBtn, downloadCurrentBtn, downloadAllBtn, toggleModeBtn, closeBtn);
     
-        // 이미지 컨테이너 생성
         const imageContainer = createImageContainer();
-    
-        // 하단 썸네일 내비게이션 생성
         const thumbnailBar = createThumbnailBar();
         imageUrls.forEach((url, index) => {
             const thumb = document.createElement('img');
@@ -618,7 +569,6 @@
             }, 1000);
         });
     
-        // 클릭 시 옵션바와 썸네일바 외 영역이면 뷰어 닫기
         viewer.addEventListener('click', (event) => {
             const optBar = document.getElementById('optionsBar');
             const thumbBar = document.getElementById('thumbnailBar');
@@ -626,6 +576,7 @@
                 viewer.remove();
                 document.body.style.overflow = '';
                 removeOverlayNavButtons();
+                window.scrollTo(0, savedScrollPos);
             }
         });
         document.addEventListener('keydown', (event) => {
@@ -633,12 +584,11 @@
                 viewer.remove();
                 document.body.style.overflow = '';
                 removeOverlayNavButtons();
+                window.scrollTo(0, savedScrollPos);
             }
         });
     
-        // mousemove 이벤트: 상단 옵션바와 하단 썸네일바의 자동 숨김/표시 처리
         viewer.addEventListener('mousemove', function(e) {
-            // 상단 옵션바 자동 숨김/표시 처리
             if (e.clientY < 50 && optionsBar && !optionsBar.contains(e.target)) {
                 clearTimeout(hideOptionsBarTimer);
                 optionsBar.style.transform = 'translateY(0)';
@@ -646,7 +596,6 @@
                     optionsBar.style.transform = 'translateY(-100%)';
                 }, 1000);
             }
-            // 하단 썸네일바 자동 숨김/표시 처리
             if (e.clientY > window.innerHeight - 50 && thumbnailBar && !thumbnailBar.contains(e.target)) {
                 clearTimeout(thumbnailBar.hideTimer);
                 thumbnailBar.style.transform = 'translateY(0)';
@@ -656,7 +605,6 @@
             }
         });
     
-        // 내비게이션 버튼 추가 및 뷰어 구성
         addOverlayNavButtons(viewer);
         viewer.append(optionsBar, imageContainer, thumbnailBar);
         document.body.appendChild(viewer);
@@ -673,9 +621,6 @@
         setupThemeObserver();
     }
     
-    // -------------------------------
-    // Observer 및 테마 업데이트
-    // -------------------------------
     function setupIntersectionObserver() {
         const viewer = document.getElementById('xcom-image-viewer');
         const images = viewer.querySelectorAll('img');
@@ -698,12 +643,12 @@
         }, options);
         images.forEach(img => observer.observe(img));
     }
-
+    
     function setupThemeObserver() {
         const observer = new MutationObserver(updateUIColors);
         observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
     }
-
+    
     function updateUIColors() {
         const { bgColor, textColor } = getUserUIColor();
         const optionsBar = document.getElementById('optionsBar');
@@ -721,10 +666,7 @@
         });
         updateFocusedImageStyle();
     }
-
-    // -------------------------------
-    // 전역 이벤트 등록
-    // -------------------------------
+    
     document.addEventListener('keydown', (event) => {
         const viewer = document.getElementById('xcom-image-viewer');
         if (!viewer) return;
@@ -741,5 +683,5 @@
     document.addEventListener('pointerdown', preventXViewer, true);
     document.addEventListener('click', preventXViewer, true);
     document.addEventListener('pointerdown', onImageClick, true);
-
+    
 })();
